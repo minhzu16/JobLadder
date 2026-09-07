@@ -1,0 +1,213 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String?
+  provider      String    @default("local") // "local" | "google"
+  providerId    String?
+  avatarUrl     String?
+  role          String    @default("USER")
+  isVerified    Boolean   @default(false)
+  verificationToken String?
+  resumeText    String?
+  cvUrl         String?
+  phone         String?
+  bio           String?
+  targetRole    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  savedJobs     SavedJob[]
+  applications  Application[]
+  chatSessions  ChatSession[]
+  cvAnalyses    CvAnalysis[]
+  interviews    InterviewSession[]
+  roadmaps      CareerRoadmap[]
+  subscription  UserSubscription?
+  notifications Notification[]
+  cvs           UserCV[]
+  createdJobs   Job[]     @relation("JobCreator")
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  industry    String?
+  workType    String?  // Onsite, Remote, Hybrid
+  rating      Float    @default(0)
+  ratingCount Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  jobs        Job[]
+}
+
+model Job {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String    @unique
+  description   String
+  requirements  String?
+  benefits      String?
+  salaryMin     Int?
+  salaryMax     Int?
+  salaryCurrency String   @default("VND")
+  location      String
+  workType      String    // "Toàn thời gian", "Bán thời gian", "Remote"
+  workMode      String    // "Tại văn phòng (Onsite)", "Remote", "Hybrid"
+  experience    String    // "Dưới 1 Năm", "1-3 năm", "3-5 năm", etc
+  industry      String    // "Công nghệ thông tin", "Marketing", etc
+  isActive      Boolean   @default(true)
+  postedAt      DateTime  @default(now())
+  expiresAt     DateTime?
+
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id])
+  creatorId     String?
+  creator       User?     @relation("JobCreator", fields: [creatorId], references: [id])
+
+  savedBy       SavedJob[]
+  applications  Application[]
+}
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String
+  jobId     String
+  savedAt   DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  job       Job      @relation(fields: [jobId], references: [id])
+  
+  @@unique([userId, jobId])
+}
+
+model Application {
+  id        String   @id @default(cuid())
+  userId    String
+  jobId     String
+  cvUrl     String?
+  status    String   @default("pending")
+  matchScore Int?
+  notes     String?
+  appliedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  job       Job      @relation(fields: [jobId], references: [id])
+  
+  @@unique([userId, jobId])
+}
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String   // "user" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id])
+}
+
+model CvAnalysis {
+  id        String   @id @default(cuid())
+  userId    String
+  score     Int
+  feedback  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model InterviewSession {
+  id              String   @id @default(cuid())
+  userId          String
+  jobTitle        String
+  jobDescription  String?
+  questions       String   // JSON array of questions
+  overallScore    Int?
+  feedback        String?
+  status          String   @default("in_progress") // "in_progress" | "completed"
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id])
+  answers         InterviewAnswer[]
+}
+
+model InterviewAnswer {
+  id              String   @id @default(cuid())
+  sessionId       String
+  questionIndex   Int
+  question        String
+  answer          String
+  score           Int?
+  strengths       String?
+  improvements    String?
+  suggestedAnswer String?
+  createdAt       DateTime @default(now())
+  session         InterviewSession @relation(fields: [sessionId], references: [id])
+}
+
+model CareerRoadmap {
+  id        String   @id @default(cuid())
+  userId    String
+  goal      String
+  roadmap   String   // JSON string of nodes
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model UserSubscription {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  planId          String   @default("free") // "free" | "advanced" | "premium"
+  cvAnalysisUsed  Int      @default(0)
+  roadmapUsed     Int      @default(0)
+  interviewUsed   Int      @default(0)
+  chatUsed        Int      @default(0)
+  resetAt         DateTime @default(now()) // Monthly reset
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("info") // "info" | "success" | "warning" | "application"
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserCV {
+  id            String   @id @default(cuid())
+  userId        String
+  title         String
+  fileName      String?
+  fileUrl       String?
+  extractedText String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+

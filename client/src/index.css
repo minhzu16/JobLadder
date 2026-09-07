@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #101010;
+  --color-bg-card: #1a1a1a;
+  --color-border: #222222;
+  --color-border-light: rgba(255, 255, 255, 0.1);
+  --color-purple-600: #6D28D9;
+  --color-purple-500: #A855F7;
+  --color-cyan-400: #22D3EE;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Sora', 'Inter', sans-serif;
+}
+
+@layer base {
+  :root {
+    --bg-grid-color: rgba(128, 128, 128, 0.07);
+  }
+  
+  html, body {
+    @apply h-full antialiased;
+    background-color: var(--color-bg-primary);
+    color: white;
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-purple-500 to-cyan-400;
+  }
+
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, var(--bg-grid-color) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--bg-grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .glass-header {
+    @apply bg-black/50 backdrop-blur supports-[backdrop-filter]:bg-black/20 border-b border-white/10;
+  }
+}
