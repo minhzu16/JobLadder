@@ -47,3 +47,15 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Temporary & Scratch Scripts
+analyze.js
+scrape.js
+jobladder-js.txt
+test_api.ts
+server/create_test_user.js
+server/data.json
+server/test_*.js
+**/test_*.js
+**/test_*.ts
+!**/tests/**/*.test.ts
